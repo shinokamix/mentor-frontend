@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -10,83 +12,91 @@ export default function RegisterPage() {
     repeat_password: '',
     role: 'user',
     contact: '',
-  });
+  })
 
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const { register } = useAuth()
+  const router = useRouter()
 
-  // Валидация формы
   const validateForm = () => {
-    const { email, password, repeat_password, role } = formData;
+    const { email, password, repeat_password, role } = formData
 
     if (!email.includes('@')) {
-      setError('Некорректный email');
-      return false;
+      setError('Некорректный email')
+      return false
     }
 
     if (password.length < 6) {
-      setError('Пароль должен содержать минимум 6 символов');
-      return false;
+      setError('Пароль должен содержать минимум 6 символов')
+      return false
     }
 
     if (password !== repeat_password) {
-      setError('Пароли не совпадают');
-      return false;
+      setError('Пароли не совпадают')
+      return false
     }
 
     if (!['user', 'mentor', 'admin'].includes(role)) {
-      setError('Выберите корректную роль');
-      return false;
+      setError('Выберите корректную роль')
+      return false
     }
 
-    return true;
-  };
+    return true
+  }
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
       [name]: value,
-    }));
-    if (error) setError('');
-  };
+    }))
+    if (error) setError('')
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
 
     try {
-      if (!validateForm()) return;
-
-      const response = await fetch('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Ошибка регистрации');
+      if (!validateForm()) {
+        setIsLoading(false)
+        return
       }
 
-      // Можно добавить redirect на /login
+      const result = await register(formData)
+      
+      if (result.success) {
+        router.push('/login')
+      } else {
+        setError(result.error)
+      }
     } catch (err) {
-      setError(err.message || 'Произошла ошибка при регистрации');
+      setError(err.message || 'Произошла ошибка при регистрации')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md text-black">
-        <h2 className="text-2xl font-bold text-center">Регистрация</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white rounded-2xl shadow-xl p-8">
+        <div className="text-center">
+          <h2 className="text-4xl font-extrabold text-gray-900 mb-2">
+            Добро пожаловать
+          </h2>
+          <p className="text-lg text-gray-800">
+            Создайте аккаунт для начала работы
+          </p>
+        </div>
 
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium">Email</label>
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-900 mb-1">
+                Email
+              </label>
               <input
                 id="email"
                 name="email"
@@ -95,12 +105,15 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                className="mt-1 block w-full border px-3 py-2 rounded-md"
+                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out text-gray-900"
+                placeholder="your@email.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium">Пароль</label>
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-900 mb-1">
+                Пароль
+              </label>
               <input
                 id="password"
                 name="password"
@@ -109,12 +122,15 @@ export default function RegisterPage() {
                 value={formData.password}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                className="mt-1 block w-full border px-3 py-2 rounded-md"
+                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out text-gray-900"
+                placeholder="Минимум 6 символов"
               />
             </div>
 
             <div>
-              <label htmlFor="repeat_password" className="block text-sm font-medium">Повторите пароль</label>
+              <label htmlFor="repeat_password" className="block text-sm font-semibold text-gray-900 mb-1">
+                Повторите пароль
+              </label>
               <input
                 id="repeat_password"
                 name="repeat_password"
@@ -123,19 +139,22 @@ export default function RegisterPage() {
                 value={formData.repeat_password}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                className="mt-1 block w-full border px-3 py-2 rounded-md"
+                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out text-gray-900"
+                placeholder="Повторите пароль"
               />
             </div>
 
             <div>
-              <label htmlFor="role" className="block text-sm font-medium">Роль</label>
+              <label htmlFor="role" className="block text-sm font-semibold text-gray-900 mb-1">
+                Роль
+              </label>
               <select
                 id="role"
                 name="role"
                 value={formData.role}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                className="mt-1 block w-full border px-3 py-2 rounded-md"
+                className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out text-gray-900"
               >
                 <option value="user">Пользователь</option>
                 <option value="mentor">Наставник</option>
@@ -144,7 +163,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="contact" className="block text-sm font-medium">Контакт (опционально)</label>
+              <label htmlFor="contact" className="block text-sm font-semibold text-gray-900 mb-1">
+                Контакт (опционально)
+              </label>
               <input
                 id="contact"
                 name="contact"
@@ -152,29 +173,57 @@ export default function RegisterPage() {
                 value={formData.contact}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                className="mt-1 block w-full border px-3 py-2 rounded-md"
+                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out text-gray-900"
+                placeholder="Телефон или другие контакты"
               />
             </div>
           </div>
 
-          {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-700 font-medium">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
-          </button>
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition duration-150 ease-in-out"
+            >
+              {isLoading ? (
+                <div className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Регистрация...
+                </div>
+              ) : (
+                'Зарегистрироваться'
+              )}
+            </button>
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-800">
+              Уже есть аккаунт?{' '}
+              <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500 transition duration-150 ease-in-out">
+                Войти
+              </Link>
+            </p>
+          </div>
         </form>
-
-        <div className="text-sm text-center text-gray-600">
-          Уже есть аккаунт?{' '}
-          <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium">
-            Войти
-          </Link>
-        </div>
       </div>
     </div>
-  );
+  )
 }
