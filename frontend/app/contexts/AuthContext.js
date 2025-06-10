@@ -38,27 +38,33 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const register = async (email, password) => {
+  const register = async (formData) => {
     try {
       const response = await fetch('http://localhost/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(formData),
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        throw new Error('Ошибка регистрации')
+        // Handle validation errors from the backend
+        if (data.errors) {
+          const errorMessage = Object.values(data.errors).join(', ')
+          throw new Error(errorMessage)
+        }
+        throw new Error(data.message || 'Ошибка регистрации')
       }
 
-      const data = await response.json()
       localStorage.setItem('token', data.token)
       setIsAuthenticated(true)
-      return data
+      return { success: true, data }
     } catch (error) {
       console.error('Registration failed:', error)
-      throw error
+      return { success: false, error: error.message }
     }
   }
 

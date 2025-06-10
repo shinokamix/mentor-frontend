@@ -68,7 +68,7 @@ export default function RegisterPage() {
       const result = await register(formData)
       
       if (result.success) {
-        router.push('/login')
+        router.push('/')
       } else {
         setError(result.error)
       }
